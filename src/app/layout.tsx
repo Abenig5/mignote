@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import "@/styles/globals.css";
+import { inter, playfair } from "@/styles/fonts";
 
 export const metadata: Metadata = {
   title: "Mignote Catering",
@@ -12,8 +15,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="en" className={`${inter.variable} ${playfair.variable}`}>
+      <body>
+        <SiteHeader />
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }
