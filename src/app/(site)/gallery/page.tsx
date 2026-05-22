@@ -1,6 +1,10 @@
-import { galleryItems } from "@/config/gallery";
+import { getGalleryItems } from "@/services/content-service";
 
-export default function GalleryPage() {
+export const dynamic = "force-dynamic";
+
+export default async function GalleryPage() {
+  const galleryItems = await getGalleryItems();
+
   return (
     <main className="page">
       <section className="container">

@@ -19,3 +19,69 @@ model Booking {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+model Category {
+  id        String     @id @default(cuid())
+  title     String     @unique
+  slug      String     @unique
+  sortOrder Int        @default(0)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  items     MenuItem[]
+}
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  price       Float?
+  image       String
+  available   Boolean  @default(true)
+  featured    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  categoryId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+}
+
+model GalleryItem {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  image       String
+  album       String?
+  featured    Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  role      String?
+  quote     String
+  featured  Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WebsiteContent {
+  id              String   @id @default("site")
+  name            String
+  email           String
+  tagline         String
+  heroKicker      String
+  heroTitle       String
+  heroDescription String
+  heroImage       String
+  storyKicker     String
+  storyTitle      String
+  storyParagraphs String[]
+  storyImage      String
+  updatedAt       DateTime @updatedAt
+}

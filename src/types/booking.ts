@@ -3,4 +3,4 @@ import { bookingSchema } from "@/lib/validation";
 
 export type BookingInput = z.infer<typeof bookingSchema>;
 
-export type BookingStatus = "PENDING" | "ACCEPTED" | "REJECTED";
+export type BookingStatus = "PENDING" | "CONFIRMED" | "COMPLETED" | "CANCELLED";

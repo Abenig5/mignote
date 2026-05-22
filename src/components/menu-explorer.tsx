@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { ArrowRight, Leaf, Star, Utensils } from "lucide-react";
 import { useMemo, useState } from "react";
-import { menuItems } from "@/config/menu";
+import type { SiteMenuItem } from "@/services/content-service";
 
 const categoryStyles: Record<string, string> = {
   Buffet: "menu-category-badge--primary",
@@ -27,11 +27,11 @@ const detailLabels: Record<string, string> = {
   "Plant Forward": "Vegetarian"
 };
 
-export function MenuExplorer() {
+export function MenuExplorer({ menuItems }: { menuItems: SiteMenuItem[] }) {
   const [activeCategory, setActiveCategory] = useState("All");
   const categories = useMemo(
     () => ["All", ...Array.from(new Set(menuItems.map((item) => item.category)))],
-    []
+    [menuItems]
   );
   const filteredItems =
     activeCategory === "All"

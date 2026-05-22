@@ -1,16 +1,21 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { galleryItems } from "@/config/gallery";
-import { menuItems } from "@/config/menu";
-import { siteConfig } from "@/config/site";
-import { testimonials } from "@/config/testimonials";
+import { getGalleryItems, getMenuItems, getSiteContent, getTestimonials } from "@/services/content-service";
 
-const featuredGalleryItems = galleryItems.slice(0, 3);
-const featuredTestimonial = testimonials[0];
-const tasteCards = menuItems.slice(0, 3);
+export const dynamic = "force-dynamic";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const [siteConfig, menuItems, galleryItems, testimonials] = await Promise.all([
+    getSiteContent(),
+    getMenuItems(),
+    getGalleryItems(),
+    getTestimonials()
+  ]);
+  const featuredGalleryItems = galleryItems.slice(0, 3);
+  const featuredTestimonial = testimonials[0];
+  const tasteCards = menuItems.slice(0, 3);
+
   return (
     <main className="landing">
       <section
@@ -126,7 +131,7 @@ export default function HomePage() {
           <blockquote>&quot;{featuredTestimonial.quote}&quot;</blockquote>
           <p>
             {featuredTestimonial.name}
-            {"role" in featuredTestimonial ? `, ${featuredTestimonial.role}` : ""}
+            {featuredTestimonial.role ? `, ${featuredTestimonial.role}` : ""}
           </p>
         </div>
       </section>

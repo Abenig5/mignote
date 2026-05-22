@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { siteConfig } from "@/config/site";
+import { getSiteContent } from "@/services/content-service";
 
 const footerLinks = [
   { label: "Home", href: "/" },
@@ -9,7 +9,9 @@ const footerLinks = [
   { label: "Contact", href: "/contact" }
 ];
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const siteConfig = await getSiteContent();
+
   return (
     <footer className="landing-footer">
       <div className="landing-container footer-grid">
