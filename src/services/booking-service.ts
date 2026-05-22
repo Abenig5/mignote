@@ -15,7 +15,7 @@ export async function createBooking(input: BookingInput) {
     }
   });
 
-  await sendBookingNotification(input);
+  await sendBookingNotification();
 
   return booking;
 }
