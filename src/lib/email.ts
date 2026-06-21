@@ -1,8 +1,6 @@
 import nodemailer from "nodemailer";
 import type { BookingInput } from "@/types/booking";
 
-const notificationEmail = process.env.NOTIFICATION_EMAIL ?? "abenezergirma5@gmail.com";
-
 type EmailPayload = {
   subject: string;
   text: string;
@@ -12,19 +10,29 @@ type EmailPayload = {
 function getEmailConfig() {
   const server = process.env.EMAIL_SERVER;
   const from = process.env.EMAIL_FROM;
+  const notificationEmail = process.env.NOTIFICATION_EMAIL;
 
-  if (!server || !from || server.includes("user:password") || from.includes("yourdomain.com")) {
+  if (
+    !server ||
+    !from ||
+    !notificationEmail ||
+    server.includes("USER:PASSWORD") ||
+    server.includes("user:password") ||
+    from.includes("yourdomain.com")
+  ) {
     return null;
   }
 
-  return { from, server };
+  return { from, notificationEmail, server };
 }
 
 async function sendEmail({ replyTo, subject, text }: EmailPayload) {
   const config = getEmailConfig();
 
   if (!config) {
-    console.warn("Email notification skipped: EMAIL_SERVER and EMAIL_FROM are not configured.");
+    console.warn(
+      "Email notification skipped: EMAIL_SERVER, EMAIL_FROM, and NOTIFICATION_EMAIL must be configured."
+    );
     return { delivered: false, skipped: true };
   }
 
@@ -35,7 +43,7 @@ async function sendEmail({ replyTo, subject, text }: EmailPayload) {
     replyTo,
     subject,
     text,
-    to: notificationEmail
+    to: config.notificationEmail
   });
 
   return { delivered: true, skipped: false };

@@ -47,9 +47,14 @@ export function ContactForm() {
         return;
       }
 
+      const data = (await response.json().catch(() => null)) as { error?: string } | null;
+
       hasSentMessage.current = false;
       setStatus("error");
-      setNotification({ tone: "error", message: "Unable to send message. Please try again." });
+      setNotification({
+        tone: "error",
+        message: data?.error ?? "Unable to send message. Please try again."
+      });
     } catch {
       hasSentMessage.current = false;
       setStatus("error");
