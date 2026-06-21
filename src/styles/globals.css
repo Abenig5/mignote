@@ -6,6 +6,8 @@
   --accent: #b4552d;
   --accent-dark: #783016;
   --line: #ded5ca;
+  --font-inter: Arial, Helvetica, sans-serif;
+  --font-playfair: Georgia, "Times New Roman", serif;
   --font-body: var(--font-inter), Arial, Helvetica, sans-serif;
   --font-display: var(--font-playfair), Georgia, "Times New Roman", serif;
 }
