@@ -1,20 +1,39 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getGalleryItems, getMenuItems, getSiteContent, getTestimonials } from "@/services/content-service";
+import { getGalleryItems, getSiteContent, getTestimonials } from "@/services/content-service";
 
 export const dynamic = "force-dynamic";
 
+const tasteCards = [
+  {
+    name: "Ethiopian Dishes",
+    description:
+      "A generous injera table with slow-simmered wots, spiced lentils, vegetables, and traditional shared service.",
+    image: "https://images.unsplash.com/photo-1543352634-a1c51d9f1fa7?auto=format&fit=crop&w=2000&h=2200&q=95"
+  },
+  {
+    name: "Eritrean Dishes",
+    description:
+      "Bright, aromatic platters with tsebhi, shiro, alicha, timtimo, salads, and classic injera accompaniments.",
+    image: "https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&w=2000&h=2200&q=95"
+  },
+  {
+    name: "European Cuisines",
+    description:
+      "Comforting European mains, pastas, roasts, salads, and desserts prepared for buffet or plated service.",
+    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=2000&h=2200&q=95"
+  }
+];
+
 export default async function HomePage() {
-  const [siteConfig, menuItems, galleryItems, testimonials] = await Promise.all([
+  const [siteConfig, galleryItems, testimonials] = await Promise.all([
     getSiteContent(),
-    getMenuItems(),
     getGalleryItems(),
     getTestimonials()
   ]);
   const featuredGalleryItems = galleryItems.slice(0, 3);
   const featuredTestimonial = testimonials[0];
-  const tasteCards = menuItems.slice(0, 3);
 
   return (
     <main className="landing">
@@ -66,8 +85,8 @@ export default async function HomePage() {
       <section className="taste-section">
         <div className="landing-container">
           <div className="centered-heading">
-            <p className="section-kicker">Featured Menus</p>
-            <h2>Taste the World</h2>
+            <p className="section-kicker">Featured Cuisines</p>
+            <h2>Ethiopian Dishes, Eritrean Dishes & European Cuisines</h2>
             <span />
           </div>
           <div className="taste-grid">

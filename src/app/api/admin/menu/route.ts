@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { menuItems as fallbackMenuItems } from "@/config/menu";
+import { requireAdminApiAuth } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
+
+const allowedCategories = new Set(["Ethiopian Dishes", "Eritrean Dishes", "European Cuisines"]);
 
 function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -18,6 +21,12 @@ async function getOrCreateCategory(title: string) {
 }
 
 export async function GET() {
+  const unauthorized = await requireAdminApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   try {
     const [items, categories] = await Promise.all([
       prisma.menuItem.findMany({
@@ -58,6 +67,12 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const unauthorized = await requireAdminApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   const body = await request.json();
   const title = String(body.title ?? "").trim();
   const description = String(body.description ?? "").trim();
@@ -66,6 +81,13 @@ export async function POST(request: Request) {
 
   if (!title || !description || !image || !categoryTitle) {
     return NextResponse.json({ error: "Missing required menu fields" }, { status: 400 });
+  }
+
+  if (!allowedCategories.has(categoryTitle)) {
+    return NextResponse.json(
+      { error: "Menu items must be added to Ethiopian Dishes, Eritrean Dishes, or European Cuisines." },
+      { status: 400 }
+    );
   }
 
   try {

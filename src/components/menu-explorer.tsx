@@ -1,11 +1,16 @@
-"use client";
-
 import Image from "next/image";
 import { ArrowRight, Leaf, Star, Utensils } from "lucide-react";
-import { useMemo, useState } from "react";
 import type { SiteMenuItem } from "@/services/content-service";
 
+type CategoryOption = {
+  key: string;
+  label: string;
+};
+
 const categoryStyles: Record<string, string> = {
+  "Ethiopian Dishes": "menu-category-badge--primary",
+  "Eritrean Dishes": "menu-category-badge--green",
+  "European Cuisines": "menu-category-badge--gold",
   Buffet: "menu-category-badge--primary",
   Plated: "menu-category-badge--primary",
   Reception: "menu-category-badge--green",
@@ -17,6 +22,9 @@ const categoryStyles: Record<string, string> = {
 };
 
 const detailLabels: Record<string, string> = {
+  "Ethiopian Dishes": "Injera Table",
+  "Eritrean Dishes": "Tsebhi & Injera",
+  "European Cuisines": "Continental",
   Buffet: "Guest Favorite",
   Plated: "Elegant",
   Reception: "Easy Flow",
@@ -27,16 +35,42 @@ const detailLabels: Record<string, string> = {
   "Plant Forward": "Vegetarian"
 };
 
-export function MenuExplorer({ menuItems }: { menuItems: SiteMenuItem[] }) {
-  const [activeCategory, setActiveCategory] = useState("All");
-  const categories = useMemo(
-    () => ["All", ...Array.from(new Set(menuItems.map((item) => item.category)))],
-    [menuItems]
+const cuisineOverviewNames = new Set(["Ethiopian Dishes", "Eritrean Dishes", "European Cuisines"]);
+
+function getCategoryKey(category: string) {
+  return category.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+export function MenuExplorer({
+  activeCategory = "all",
+  menuItems
+}: {
+  activeCategory?: string;
+  menuItems: SiteMenuItem[];
+}) {
+  const visibleMenuItems = menuItems.filter((item) => !cuisineOverviewNames.has(item.name));
+  const seen = new Set<string>();
+  const categories = visibleMenuItems.reduce<CategoryOption[]>(
+    (items, item) => {
+      const key = getCategoryKey(item.category);
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        items.push({ key, label: item.category });
+      }
+
+      return items;
+    },
+    [{ key: "all", label: "All" }]
   );
+  const activeCategoryKey = getCategoryKey(activeCategory);
+  const selectedCategory = categories.some((category) => category.key === activeCategoryKey)
+    ? activeCategoryKey
+    : "all";
   const filteredItems =
-    activeCategory === "All"
-      ? menuItems
-      : menuItems.filter((item) => item.category === activeCategory);
+    selectedCategory === "all"
+      ? visibleMenuItems
+      : visibleMenuItems.filter((item) => getCategoryKey(item.category) === selectedCategory);
 
   return (
     <main className="menu-explorer">
@@ -45,21 +79,20 @@ export function MenuExplorer({ menuItems }: { menuItems: SiteMenuItem[] }) {
           <p className="eyebrow">Menus</p>
           <h1>Menu Categories</h1>
           <p>
-            Browse catering styles by service category, from plated dinners and generous
-            buffets to reception bites, brunch tables, desserts, and plant-forward spreads.
+            Browse Ethiopian dishes, Eritrean dishes, and European cuisines for buffet,
+            plated, family-style, and reception service.
           </p>
         </div>
         <div className="menu-filter" aria-label="Menu categories">
           {categories.map((category) => (
-            <button
-              aria-pressed={activeCategory === category}
+            <a
+              aria-current={selectedCategory === category.key ? "true" : undefined}
               className="menu-filter__chip"
-              key={category}
-              onClick={() => setActiveCategory(category)}
-              type="button"
+              href={category.key === "all" ? "/menu" : `/menu?category=${category.key}`}
+              key={category.key}
             >
-              {category}
-            </button>
+              {category.label}
+            </a>
           ))}
         </div>
       </section>
@@ -71,6 +104,7 @@ export function MenuExplorer({ menuItems }: { menuItems: SiteMenuItem[] }) {
               <Image
                 alt={`${item.name} food presentation`}
                 height={880}
+                unoptimized={item.image.startsWith("data:")}
                 quality={95}
                 sizes="(min-width: 1100px) 33vw, (min-width: 760px) 50vw, 100vw"
                 src={item.image}
@@ -102,7 +136,7 @@ export function MenuExplorer({ menuItems }: { menuItems: SiteMenuItem[] }) {
                   {detailLabels[item.category] ?? "Menu"}
                 </span>
                 <a className="menu-category-card__link" href="/booking">
-                  Details
+                  Book Now
                   <ArrowRight aria-hidden="true" size={16} />
                 </a>
               </div>
