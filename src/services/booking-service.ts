@@ -15,7 +15,11 @@ export async function createBooking(input: BookingInput) {
     }
   });
 
-  await sendBookingNotification();
+  try {
+    await sendBookingNotification(input);
+  } catch (error) {
+    console.error("Booking notification email failed:", error);
+  }
 
   return booking;
 }

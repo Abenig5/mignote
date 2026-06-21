@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { requireAdminApiAuth } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
+
+const allowedCategories = new Set(["Ethiopian Dishes", "Eritrean Dishes", "European Cuisines"]);
 
 function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
@@ -21,6 +24,12 @@ type RouteContext = {
 };
 
 export async function PATCH(request: Request, context: RouteContext) {
+  const unauthorized = await requireAdminApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   const { id } = await context.params;
   const body = await request.json();
   const title = String(body.title ?? "").trim();
@@ -30,6 +39,13 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   if (!title || !description || !image || !categoryTitle) {
     return NextResponse.json({ error: "Missing required menu fields" }, { status: 400 });
+  }
+
+  if (!allowedCategories.has(categoryTitle)) {
+    return NextResponse.json(
+      { error: "Menu items must be added to Ethiopian Dishes, Eritrean Dishes, or European Cuisines." },
+      { status: 400 }
+    );
   }
 
   try {
@@ -55,6 +71,12 @@ export async function PATCH(request: Request, context: RouteContext) {
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
+  const unauthorized = await requireAdminApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   const { id } = await context.params;
 
   try {

@@ -8,3 +8,9 @@ export const bookingSchema = z.object({
   guestCount: z.coerce.number().int().positive(),
   message: z.string().optional()
 });
+
+export const contactSchema = z.object({
+  name: z.string().min(2),
+  email: z.string().email(),
+  message: z.string().min(5)
+});

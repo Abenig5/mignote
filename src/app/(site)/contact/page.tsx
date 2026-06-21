@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { Mail, MapPin, Menu as MenuIcon, Phone } from "lucide-react";
+import { ContactForm } from "@/components/contact-form";
 import { getSiteContent } from "@/services/content-service";
 
 const contactHeroImage =
@@ -36,29 +36,7 @@ export default async function ContactPage() {
         <div className="contact-grid">
           <section className="contact-card contact-form-card">
             <h2>Contact Us</h2>
-            <form>
-              <div className="contact-form-pair">
-                <label>
-                  <span>Full Name</span>
-                  <input name="name" placeholder="Your name" type="text" />
-                </label>
-                <label>
-                  <span>Email Address</span>
-                  <input name="email" placeholder="you@example.com" type="email" />
-                </label>
-              </div>
-              <label>
-                <span>Your Message</span>
-                <textarea
-                  name="message"
-                  placeholder="Tell us about the date, guest count, location, and menu direction..."
-                  rows={5}
-                />
-              </label>
-              <Link className="contact-submit" href="/booking">
-                Submit Inquiry
-              </Link>
-            </form>
+            <ContactForm />
           </section>
 
           <aside className="contact-side">

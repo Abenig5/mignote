@@ -85,3 +85,12 @@ model WebsiteContent {
   storyImage      String
   updatedAt       DateTime @updatedAt
 }
+
+model AdminAccount {
+  id           String   @id @default("primary")
+  username     String   @unique
+  passwordHash String
+  salt         String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

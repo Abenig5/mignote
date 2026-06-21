@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAdminApiAuth } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
 
 const allowedStatuses = new Set(["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"]);
@@ -8,6 +9,12 @@ type RouteContext = {
 };
 
 export async function PATCH(request: Request, context: RouteContext) {
+  const unauthorized = await requireAdminApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   const { id } = await context.params;
   const body = await request.json();
   const status = String(body.status ?? "");
@@ -32,6 +39,12 @@ export async function PATCH(request: Request, context: RouteContext) {
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
+  const unauthorized = await requireAdminApiAuth();
+
+  if (unauthorized) {
+    return unauthorized;
+  }
+
   const { id } = await context.params;
 
   try {

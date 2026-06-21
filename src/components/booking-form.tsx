@@ -17,9 +17,9 @@ import {
   Users,
   Utensils
 } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 
-const cuisineOptions = ["Buffet", "Plated", "Reception", "Family Style", "Brunch", "Plant Forward"];
+const cuisineOptions = ["Ethiopian", "Eritrean", "European"];
 const dietaryOptions = ["Vegan", "Gluten-Free", "Halal", "Nut-Free", "Kosher"];
 const serviceStyles = [
   { label: "Buffet", icon: Utensils },
@@ -46,8 +46,12 @@ export function BookingForm() {
   const [step, setStep] = useState(1);
   const [draft, setDraft] = useState<BookingDraft>({});
   const [selectedCuisines, setSelectedCuisines] = useState<string[]>([]);
-  const [selectedDietary, setSelectedDietary] = useState<string[]>(["Halal"]);
+  const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
   const [status, setStatus] = useState<"idle" | "submitting" | "sent" | "error">("idle");
+  const [notification, setNotification] = useState<
+    { tone: "success" | "warning" | "error"; message: string } | null
+  >(null);
+  const hasSubmittedInquiry = useRef(false);
 
   function handleStepOneSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -60,6 +64,7 @@ export function BookingForm() {
       cuisinePreference: selectedCuisines
     }));
     setStatus("idle");
+    setNotification(null);
     setStep(2);
   }
 
@@ -74,12 +79,21 @@ export function BookingForm() {
       dishRequests: String(formData.get("dishRequests") ?? "")
     }));
     setStatus("idle");
+    setNotification(null);
     setStep(3);
   }
 
   async function handleFinalSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (hasSubmittedInquiry.current) {
+      setNotification({ tone: "warning", message: "Inquiry already submitted." });
+      return;
+    }
+
+    hasSubmittedInquiry.current = true;
     setStatus("submitting");
+    setNotification(null);
 
     const formData = new FormData(event.currentTarget);
     const payload = {
@@ -106,7 +120,15 @@ export function BookingForm() {
       body: JSON.stringify(payload)
     });
 
-    setStatus(response.ok ? "sent" : "error");
+    if (response.ok) {
+      setStatus("sent");
+      setNotification({ tone: "success", message: "Inquiry received." });
+      return;
+    }
+
+    hasSubmittedInquiry.current = false;
+    setStatus("error");
+    setNotification({ tone: "error", message: "Please check the form and try again." });
   }
 
   function toggleSelected(value: string, setter: (update: (current: string[]) => string[]) => void) {
@@ -356,11 +378,14 @@ export function BookingForm() {
                 </div>
               </div>
 
-              {status === "sent" && <p className="booking-status" role="status">Inquiry received.</p>}
-              {status === "error" && (
-                <p className="booking-status booking-status--error" role="alert">
-                  Please check the form and try again.
-                </p>
+              {notification && (
+                <div
+                  className={`booking-notification booking-notification--${notification.tone}`}
+                  role={notification.tone === "error" ? "alert" : "status"}
+                >
+                  <CheckCircle2 aria-hidden="true" size={20} />
+                  <p>{notification.message}</p>
+                </div>
               )}
             </form>
 
