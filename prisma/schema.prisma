@@ -4,7 +4,10 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Pooled connection (Supabase transaction mode, port 6543) for serverless runtime.
+  url       = env("DATABASE_URL")
+  // Direct connection (session mode, port 5432) required for migrations.
+  directUrl = env("DIRECT_URL")
 }
 
 model Booking {

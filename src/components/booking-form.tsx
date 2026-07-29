@@ -146,7 +146,14 @@ export function BookingForm() {
 
     hasSubmittedInquiry.current = false;
     setStatus("error");
-    setNotification({ tone: "error", message: "Please check the form and try again." });
+    setNotification({
+      tone: "error",
+      // A 5xx is a server problem, so telling the guest to fix their input is misleading.
+      message:
+        response.status >= 500
+          ? "We could not save your inquiry right now. Please try again shortly or call us."
+          : "Please check the form and try again."
+    });
   }
 
   function toggleSelected(value: string, setter: (update: (current: string[]) => string[]) => void) {
