@@ -114,15 +114,33 @@ export function BookingForm() {
       ].join("\n")
     };
 
-    const response = await fetch("/api/bookings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    let response: Response;
+
+    try {
+      response = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+    } catch {
+      hasSubmittedInquiry.current = false;
+      setStatus("error");
+      setNotification({ tone: "error", message: "Network error. Please try again." });
+      return;
+    }
 
     if (response.ok) {
+      const data = (await response.json().catch(() => null)) as { notified?: boolean } | null;
+
       setStatus("sent");
-      setNotification({ tone: "success", message: "Inquiry received." });
+      setNotification(
+        data?.notified === false
+          ? {
+              tone: "warning",
+              message: "Inquiry received. Email confirmation to our team is delayed."
+            }
+          : { tone: "success", message: "Inquiry received." }
+      );
       return;
     }
 

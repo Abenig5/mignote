@@ -10,7 +10,7 @@
 6. Valid requests are saved through `createBooking` in `src/services/booking-service.ts`.
 7. Prisma creates a `Booking` record with `PENDING` status.
 8. `sendBookingNotification` is called after persistence.
-9. The API returns `201` with the created booking.
+9. The API returns `201` with the created booking and a `notified` flag.
 
 ## Admin Flow
 
@@ -35,4 +35,17 @@ The Prisma `Booking` model stores:
 
 ## Notification Status
 
-`src/lib/email.ts` currently contains a placeholder notification function. It returns `{ delivered: true }` and should be connected to the chosen SMTP or transactional email provider before production use.
+`src/lib/email.ts` sends notifications through the Resend HTTP API. See the Email Notifications
+section of `README.md` for the required environment variables and the Resend sandbox restrictions.
+
+Notification outcomes:
+
+- Delivered: `createBooking` returns `notified: true` and the form shows a success message.
+- Skipped, because email environment variables are missing: the missing names are logged,
+  `notified` is `false`, and the form shows a warning.
+- Rejected by Resend, or the API is unreachable: the error is logged, `notified` is `false`, and
+  the form shows a warning.
+
+A notification failure never fails the booking. The record is already persisted before the email
+is attempted, so the API still returns `201`. A database failure returns `500` with the cause
+logged server side.

@@ -15,11 +15,21 @@ export async function createBooking(input: BookingInput) {
     }
   });
 
+  // The booking is already persisted, so a failed notification must not fail
+  // the request. It is reported back so the caller can surface it.
+  let notified = false;
+
   try {
-    await sendBookingNotification(input);
+    const result = await sendBookingNotification(input);
+
+    notified = result.delivered;
+
+    if (result.skipped) {
+      console.error(`Booking notification skipped. ${result.reason}`);
+    }
   } catch (error) {
     console.error("Booking notification email failed:", error);
   }
 
-  return booking;
+  return { booking, notified };
 }

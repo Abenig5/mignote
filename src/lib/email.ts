@@ -1,5 +1,7 @@
-import nodemailer from "nodemailer";
 import type { BookingInput } from "@/types/booking";
+
+const RESEND_ENDPOINT = "https://api.resend.com/emails";
+const REQUEST_TIMEOUT_MS = 10_000;
 
 type EmailPayload = {
   subject: string;
@@ -7,46 +9,127 @@ type EmailPayload = {
   replyTo?: string;
 };
 
-function getEmailConfig() {
-  const server = process.env.EMAIL_SERVER;
-  const from = process.env.EMAIL_FROM;
-  const notificationEmail = process.env.NOTIFICATION_EMAIL;
+export type SendResult =
+  | { delivered: true; skipped: false; id: string }
+  | { delivered: false; skipped: true; reason: string };
 
-  if (
-    !server ||
-    !from ||
-    !notificationEmail ||
-    server.includes("USER:PASSWORD") ||
-    server.includes("user:password") ||
-    from.includes("yourdomain.com")
-  ) {
+export class EmailDeliveryError extends Error {
+  readonly status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "EmailDeliveryError";
+    this.status = status;
+  }
+}
+
+type EmailConfig = {
+  apiKey: string;
+  from: string;
+  notificationEmail: string;
+};
+
+const PLACEHOLDER_MARKERS = [
+  "USER:PASSWORD",
+  "user:password",
+  "yourdomain.com",
+  "your-email@example.com",
+  "YOUR_RESEND_API_KEY"
+];
+
+function looksLikePlaceholder(value: string) {
+  return PLACEHOLDER_MARKERS.some((marker) => value.includes(marker));
+}
+
+/**
+ * Resolves the Resend API key. Prefers RESEND_API_KEY, but still accepts the
+ * older EMAIL_SERVER SMTP URL so existing deployments keep working after the
+ * switch from SMTP to the Resend HTTP API.
+ */
+function resolveApiKey() {
+  const direct = process.env.RESEND_API_KEY?.trim();
+
+  if (direct && !looksLikePlaceholder(direct)) {
+    return direct;
+  }
+
+  const server = process.env.EMAIL_SERVER?.trim();
+
+  if (!server || looksLikePlaceholder(server)) {
     return null;
   }
 
-  return { from, notificationEmail, server };
+  return server.match(/re_[A-Za-z0-9_-]{10,}/)?.[0] ?? null;
 }
 
-async function sendEmail({ replyTo, subject, text }: EmailPayload) {
-  const config = getEmailConfig();
+function getEmailConfig(): { config: EmailConfig } | { reason: string } {
+  const apiKey = resolveApiKey();
+  const from = process.env.EMAIL_FROM?.trim();
+  const notificationEmail = process.env.NOTIFICATION_EMAIL?.trim();
 
-  if (!config) {
-    console.warn(
-      "Email notification skipped: EMAIL_SERVER, EMAIL_FROM, and NOTIFICATION_EMAIL must be configured."
-    );
-    return { delivered: false, skipped: true };
+  const missing: string[] = [];
+
+  if (!apiKey) missing.push("RESEND_API_KEY");
+  if (!from || looksLikePlaceholder(from)) missing.push("EMAIL_FROM");
+  if (!notificationEmail || looksLikePlaceholder(notificationEmail)) {
+    missing.push("NOTIFICATION_EMAIL");
   }
 
-  const transporter = nodemailer.createTransport(config.server);
+  if (!apiKey || !from || !notificationEmail || missing.length > 0) {
+    return { reason: `Missing or placeholder environment variables: ${missing.join(", ")}` };
+  }
 
-  await transporter.sendMail({
-    from: config.from,
-    replyTo,
-    subject,
-    text,
-    to: config.notificationEmail
-  });
+  return { config: { apiKey, from, notificationEmail } };
+}
 
-  return { delivered: true, skipped: false };
+async function readResendError(response: Response) {
+  const body = (await response.json().catch(() => null)) as { message?: string } | null;
+
+  return body?.message ?? `Resend returned HTTP ${response.status}`;
+}
+
+async function sendEmail({ replyTo, subject, text }: EmailPayload): Promise<SendResult> {
+  const resolved = getEmailConfig();
+
+  if ("reason" in resolved) {
+    console.warn(`Email notification skipped. ${resolved.reason}`);
+
+    return { delivered: false, skipped: true, reason: resolved.reason };
+  }
+
+  const { config } = resolved;
+
+  let response: Response;
+
+  try {
+    response = await fetch(RESEND_ENDPOINT, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from: config.from,
+        to: [config.notificationEmail],
+        subject,
+        text,
+        ...(replyTo ? { reply_to: [replyTo] } : {})
+      }),
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
+    });
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : "unknown network error";
+
+    throw new EmailDeliveryError(502, `Could not reach the Resend API: ${detail}`);
+  }
+
+  if (!response.ok) {
+    throw new EmailDeliveryError(response.status, await readResendError(response));
+  }
+
+  const body = (await response.json().catch(() => null)) as { id?: string } | null;
+
+  return { delivered: true, skipped: false, id: body?.id ?? "unknown" };
 }
 
 export async function sendBookingNotification(input: BookingInput) {

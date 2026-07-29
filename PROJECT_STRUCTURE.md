@@ -31,6 +31,7 @@
 - `/contact` renders contact content.
 - `/admin` renders the admin dashboard entry point.
 - `/api/bookings` accepts booking submissions.
+- `/api/contact` accepts contact form submissions.
 
 ## Components
 
@@ -46,7 +47,7 @@
 
 - `db.ts` creates the Prisma client.
 - `validation.ts` defines Zod validation schemas.
-- `email.ts` contains the booking notification placeholder.
+- `email.ts` sends booking and contact notifications through the Resend HTTP API.
 
 `src/services` contains business logic that coordinates persistence and side effects.
 
