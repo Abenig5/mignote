@@ -1,7 +1,13 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { getGalleryItems, getSiteContent, getTestimonials } from "@/services/content-service";
+import { MenuPreview } from "@/components/menu-preview";
+import {
+  getGalleryItems,
+  getMenuItems,
+  getSiteContent,
+  getTestimonials
+} from "@/services/content-service";
 
 export const dynamic = "force-dynamic";
 
@@ -27,8 +33,9 @@ const tasteCards = [
 ];
 
 export default async function HomePage() {
-  const [siteConfig, galleryItems, testimonials] = await Promise.all([
+  const [siteConfig, menuItems, galleryItems, testimonials] = await Promise.all([
     getSiteContent(),
+    getMenuItems(),
     getGalleryItems(),
     getTestimonials()
   ]);
@@ -112,6 +119,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      <MenuPreview menuItems={menuItems} />
 
       <section className="gallery-section">
         <div className="landing-container">
